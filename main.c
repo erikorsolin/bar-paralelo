@@ -8,34 +8,40 @@
 
 // N -> número de clientes
 // G -> número de garçons
-// Gn -> quantidade de clientes que cada garçom atende
+// Gn -> quantidade de clientes que cada Garçom  atende
 // R -> número de rodadas
 
-int N, G, Gn, R, max_conversa, max_consumo, rodada = 0;
-sem_t sem_pedido, sem_entrega, mutex;
+int N, G, Gn, R, max_conversa, max_consumo, rodada = 0, pedidos_pendentes = 0;
+sem_t sem_pedidos, sem_entregas, mutex_pedidos, mutex_entregas;
 
 
 void* cliente(void* arg) {
     while (rodada < R) {
+
         // Conversando
         sleep(rand() % max_conversa);
 
         // Fazendo o pedido
-        sem_wait(&mutex);
-        
+        sem_wait(&mutex_pedidos);
+
         if (rodada < R) {
-        sem_post(&sem_pedido);
-        printf("Cliente %ld faz pedido\n", pthread_self());
+            pedidos_pendentes++;
+            printf("Cliente %ld faz pedido\n", pthread_self());
+            sem_post(&sem_pedidos);
         }
         
-        sem_post(&mutex);
+        sem_post(&mutex_pedidos);
 
         // Esperando o pedido ser entregue
-        sem_wait(&sem_entrega);
+        sem_wait(&sem_entregas);
 
-        sem_wait(&mutex);
+        // Recebendo o pedido
+        sem_wait(&mutex_pedidos);
+
         printf("Cliente %ld recebe pedido\n", pthread_self());
-        sem_post(&mutex);
+        if (!(--pedidos_pendentes)) printf("\nFim da rodada %d\n\n", ++rodada);
+
+        sem_post(&mutex_pedidos);
 
         // Comendo
         sleep(rand() % max_consumo);
@@ -50,33 +56,18 @@ void* garcom(void* arg) {
 
         // Esperando os pedidos
         for (int i = 0; i < Gn; i++) {
-            sem_wait(&sem_pedido);
 
-            sem_wait(&mutex);
-            printf("Garçom %ld anota pedido\n", pthread_self());
-            sem_post(&mutex);
+            sem_wait(&sem_pedidos);
+            printf("Garçom  %ld anota %dº pedido\n", pthread_self(), i + 1);
         }
 
         // Entregando o pedido
-        sem_wait(&mutex);
-        for (int i = 0; i < Gn; i++) {
-            sem_post(&sem_entrega);
-            printf("Garçom %ld entrega pedido\n", pthread_self());
-        }
-        sem_post(&mutex);
+        sem_wait(&mutex_entregas);
+
+        printf("Garçom  %ld entrega pedidos\n", pthread_self());
+        for (int i = 0; i < Gn; i++) sem_post(&sem_entregas);
         
-        // Verificando se a rodada acabou
-        int value_pedidos, value_entregas;
-
-        sem_getvalue(&sem_pedido, &value_pedidos);
-        sem_getvalue(&sem_entrega, &value_entregas);
-
-        sem_wait(&mutex);
-        if (!value_pedidos && !value_entregas && rodada_local == rodada) {
-            printf("\nGarçom %ld terminou a rodada %d\n\n", pthread_self(), (rodada + 1));
-            rodada++;
-        }
-        sem_post(&mutex);
+        sem_post(&mutex_entregas);
 
     }
     return 0;
@@ -100,9 +91,10 @@ int main(int argc, char* argv[]){
     max_consumo = atoi(argv[6]);
 
     // Inicializando os semáforos
-    sem_init(&sem_pedido, 0, 0);
-    sem_init(&sem_entrega, 0, 0);
-    sem_init(&mutex, 0, 1);
+    sem_init(&sem_pedidos, 0, 0);
+    sem_init(&sem_entregas, 0, 0);
+    sem_init(&mutex_pedidos, 0, 1);
+    sem_init(&mutex_entregas, 0, 1);
 
     // Inicializando as threads
     pthread_t clientes[N];
@@ -127,9 +119,10 @@ int main(int argc, char* argv[]){
     }
 
     // Destruindo os semáforos
-    sem_destroy(&sem_pedido);
-    sem_destroy(&sem_entrega);
-    sem_destroy(&mutex);
+    sem_destroy(&sem_pedidos);
+    sem_destroy(&sem_entregas);
+    sem_destroy(&mutex_pedidos);
+    sem_destroy(&mutex_entregas);
 
     return 0;
 }
