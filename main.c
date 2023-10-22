@@ -28,6 +28,8 @@ void* cliente(void* arg) {
             pedidos_pendentes++;
             printf("Cliente %ld faz pedido\n", pthread_self());
             sem_post(&sem_pedidos);
+        } else {
+            exit(1);
         }
         
         sem_post(&mutex_pedidos);
