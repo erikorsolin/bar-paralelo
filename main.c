@@ -25,13 +25,13 @@ void* cliente(void* arg) {
         sem_wait(&mutex_pedidos);
 
         if (rodada < R) {
+
             pedidos_pendentes++;
-            printf("Cliente %ld faz pedido\n", pthread_self());
+            printf("Cliente %ld faz pedido                    ++pedidos pendentes = %d\n", pthread_self(), pedidos_pendentes);
             sem_post(&sem_pedidos);
-        } else {
-            exit(1);
-        }
-        
+            
+        } else exit(1);
+
         sem_post(&mutex_pedidos);
 
         // Esperando o pedido ser entregue
@@ -40,8 +40,8 @@ void* cliente(void* arg) {
         // Recebendo o pedido
         sem_wait(&mutex_pedidos);
 
-        printf("Cliente %ld recebe pedido\n", pthread_self());
-        if (!(--pedidos_pendentes)) printf("\nFim da rodada %d\n\n", ++rodada);
+        printf("Cliente %ld recebe pedido                 --pedidos pendentes = %d\n", pthread_self(), --pedidos_pendentes);
+        if (!(pedidos_pendentes)) printf("\nFim da rodada %d\n\n", ++rodada);
 
         sem_post(&mutex_pedidos);
 
@@ -54,7 +54,6 @@ void* cliente(void* arg) {
 
 void* garcom(void* arg) {
     while (rodada < R) {
-        int rodada_local = rodada;
 
         // Esperando os pedidos
         for (int i = 0; i < Gn; i++) {
@@ -102,6 +101,9 @@ int main(int argc, char* argv[]){
     pthread_t clientes[N];
     pthread_t garcons[G];
 
+    // Abrindo o bar
+    printf("\nBAR ABERTO: %d RODADAS GRÁTIS!!!\n\n", R);
+
     // Criando as threads
     for (int i = 0; i < N; i++) {
         pthread_create(&clientes[i], NULL, cliente, NULL);
@@ -119,6 +121,9 @@ int main(int argc, char* argv[]){
     for (int i = 0; i < G; i++) {
         pthread_join(garcons[i], NULL);
     }
+
+    // Fechando o bar
+    printf("\nBAR FECHADO, ATÉ A PRÓXIMA!!!\n");
 
     // Destruindo os semáforos
     sem_destroy(&sem_pedidos);
