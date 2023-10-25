@@ -15,7 +15,7 @@ int N, G, Gn, R, max_conversa, max_consumo, rodada = 0, pedidos_pendentes = 0;
 sem_t sem_pedidos, sem_entregas, mutex_pedidos, mutex_entregas;
 
 
-void* cliente(void* arg) {
+void* cliente(void* id_cliente) {
     while (rodada < R) {
 
         // Conversando
@@ -27,7 +27,7 @@ void* cliente(void* arg) {
         if (rodada < R) {
 
             pedidos_pendentes++;
-            printf("Cliente %ld faz pedido                    ++pedidos pendentes = %d\n", pthread_self(), pedidos_pendentes);
+            printf("Cliente %d faz pedido                    ++pedidos pendentes = %d\n", *(int*)id_cliente, pedidos_pendentes);
             sem_post(&sem_pedidos);
             
         } else exit(1);
@@ -40,7 +40,7 @@ void* cliente(void* arg) {
         // Recebendo o pedido
         sem_wait(&mutex_pedidos);
 
-        printf("Cliente %ld recebe pedido                 --pedidos pendentes = %d\n", pthread_self(), --pedidos_pendentes);
+        printf("Cliente %d recebe pedido                 --pedidos pendentes = %d\n", *(int*)id_cliente, --pedidos_pendentes);
         if (!(pedidos_pendentes)) printf("\nFim da rodada %d\n\n", ++rodada);
 
         sem_post(&mutex_pedidos);
@@ -52,20 +52,19 @@ void* cliente(void* arg) {
     return 0;
 }
 
-void* garcom(void* arg) {
+void* garcom(void* id_garcom) {
     while (rodada < R) {
 
         // Esperando os pedidos
         for (int i = 0; i < Gn; i++) {
-
             sem_wait(&sem_pedidos);
-            printf("Garçom  %ld anota %dº pedido\n", pthread_self(), i + 1);
+            printf("Garçom  %d anota %dº pedido\n", *(int*)id_garcom, i + 1);
         }
-
+        
         // Entregando o pedido
         sem_wait(&mutex_entregas);
 
-        printf("Garçom  %ld entrega pedidos\n", pthread_self());
+        printf("Garçom  %d entrega pedidos\n", *(int*)id_garcom);
         for (int i = 0; i < Gn; i++) sem_post(&sem_entregas);
         
         sem_post(&mutex_entregas);
@@ -98,6 +97,7 @@ int main(int argc, char* argv[]){
     sem_init(&mutex_entregas, 0, 1);
 
     // Inicializando as threads
+    int id_clientes[N], id_garcons[G];
     pthread_t clientes[N];
     pthread_t garcons[G];
 
@@ -106,11 +106,13 @@ int main(int argc, char* argv[]){
 
     // Criando as threads
     for (int i = 0; i < N; i++) {
-        pthread_create(&clientes[i], NULL, cliente, NULL);
+        id_clientes[i] = i + 1;
+        pthread_create(&clientes[i], NULL, cliente, &id_clientes[i]);
     }
 
     for (int i = 0; i < G; i++) {
-        pthread_create(&garcons[i], NULL, garcom, NULL);
+        id_garcons[i] = i + 1;
+        pthread_create(&garcons[i], NULL, garcom, &id_garcons[i]);
     }
 
     // Esperando as threads terminarem
