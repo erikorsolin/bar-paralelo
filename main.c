@@ -17,11 +17,14 @@ sem_t sem_pedidos, sem_entregas, mutex_pedidos, mutex_entregas, garcons_prontos;
 typedef struct {
     int id_cliente;
     int* pedidos;
+    sem_t mutex_cliente;
+    sem_t* lista_mutex_cliente;
 } info_clientes;
 
 typedef struct {
     int id_garcom;
     int* pedidos;
+    sem_t* lista_mutex_cliente;
 } info_garcons;
 
 
@@ -36,7 +39,7 @@ void* cliente(void* info_cliente) {
 
         // Fazendo o pedido
         sem_wait(&mutex_pedidos);
-        printf("CLIENTE %02d PEDIU\n", cliente->id_cliente);
+        printf("CLIENTE %02d PEDIU    %p\n", cliente->id_cliente, &cliente->mutex_cliente);
         cliente->pedidos[(index_pedidos++)%N] = cliente->id_cliente;
         sem_post(&sem_pedidos);
         sem_post(&mutex_pedidos);
@@ -48,6 +51,8 @@ void* cliente(void* info_cliente) {
         sleep(rand() % max_consumo);
     
     }
+
+    sem_destroy(&cliente->mutex_cliente);
     return 0;
 }
 
@@ -113,6 +118,7 @@ int main(int argc, char* argv[]){
 
     // Inicializando vetores
     int* pedidos = (int*) malloc(N * sizeof(int));
+    sem_t* lista_mutex_cliente = (sem_t*) malloc(N * sizeof(sem_t));
     info_clientes info_cliente[N];
     info_garcons info_garcom[G];
 
@@ -132,8 +138,15 @@ int main(int argc, char* argv[]){
 
     // Criando as threads dos clientes
     for (int i = 0; i < N; i++){
+
+        sem_t mutex_cliente;
+        sem_init(&mutex_cliente, 0, 1);
+
         info_cliente[i].id_cliente = i + 1;
         info_cliente[i].pedidos = pedidos;
+        info_cliente[i].mutex_cliente = mutex_cliente;
+        info_cliente[i].lista_mutex_cliente = lista_mutex_cliente;
+
         pthread_create(&clientes[i], NULL, cliente, (void*)&info_cliente[i]);
     }
 
