@@ -58,7 +58,6 @@ void* garcom(void* info_garcom) {
     info_garcons* garcom = (info_garcons*) info_garcom;
 
     int anotados[Gn];
-    for (int i = 0; i < Gn; i++) anotados[i] = 0;
 
     while (rodada < R) {
 
@@ -112,22 +111,10 @@ int main(int argc, char* argv[]){
     max_conversa = atoi(argv[5]);
     max_consumo = atoi(argv[6]);
 
-    // Lista de pedidos
+    // Inicializando vetores
     int* pedidos = (int*) malloc(N * sizeof(int));
     info_clientes info_cliente[N];
     info_garcons info_garcom[G];
-
-    for (int i = 0; i < N; i++) pedidos[i] = 0;
-
-    for (int i = 0; i < N; i++) {
-        info_cliente[i].id_cliente = i + 1;
-        info_cliente[i].pedidos = pedidos;
-    }
-
-    for (int i = 0; i < G; i++) {
-        info_garcom[i].id_garcom = i + 1;
-        info_garcom[i].pedidos = pedidos;
-    }
 
     // Inicializando os semáforos
     sem_init(&sem_pedidos, 0, 0);
@@ -144,16 +131,28 @@ int main(int argc, char* argv[]){
     printf("\nBAR ABERTO: %d RODADAS GRÁTIS!!!\n\n", R);
 
     // Criando as threads dos clientes
-    for (int i = 0; i < N; i++) pthread_create(&clientes[i], NULL, cliente, (void*)&info_cliente[i]);
+    for (int i = 0; i < N; i++){
+        info_cliente[i].id_cliente = i + 1;
+        info_cliente[i].pedidos = pedidos;
+        pthread_create(&clientes[i], NULL, cliente, (void*)&info_cliente[i]);
+    }
 
     // Criando as threads dos garçons
-    for (int i = 0; i < G; i++) pthread_create(&garcons[i], NULL, garcom, (void*)&info_garcom[i]);
+    for (int i = 0; i < G; i++){
+        info_garcom[i].id_garcom = i + 1;
+        info_garcom[i].pedidos = pedidos;
+        pthread_create(&garcons[i], NULL, garcom, (void*)&info_garcom[i]);
+    }
 
     // Esperando as threads clientes terminarem
-    for (int i = 0; i < N; i++) pthread_join(clientes[i], NULL);
+    for (int i = 0; i < N; i++){
+        pthread_join(clientes[i], NULL);
+    }
 
     // Esperando as threads garçons terminarem
-    for (int i = 0; i < G; i++) pthread_join(garcons[i], NULL);
+    for (int i = 0; i < G; i++){
+        pthread_join(garcons[i], NULL);
+    }
 
     // Fechando o bar
     printf("\nBAR FECHADO, ATÉ A PRÓXIMA!!!\n");
