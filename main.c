@@ -12,7 +12,7 @@
 
 
 int N, G, Gn, R, max_conversa, max_consumo, rodada = 0, index_pedidos = 0, index_entregas = 0;
-sem_t sem_pedidos, sem_entregas, mutex_pedidos, mutex_entregas, garcons_prontos;
+sem_t sem_pedidos, mutex_pedidos, mutex_entregas, garcons_prontos;
 
 typedef struct {
     int id_cliente;
@@ -141,7 +141,6 @@ int main(int argc, char* argv[]){
 
     // Inicializando os semáforos
     sem_init(&sem_pedidos, 0, 0);
-    sem_init(&sem_entregas, 0, 0);
     sem_init(&mutex_pedidos, 0, 1);
     sem_init(&mutex_entregas, 0, 1);
     sem_init(&garcons_prontos, 0, 0);
@@ -153,16 +152,6 @@ int main(int argc, char* argv[]){
     // Abrindo o bar
     printf("\nBAR ABERTO: %d RODADAS GRÁTIS!!!\n\n", R);
 
-    // Criando as threads dos clientes
-    for (int i = 0; i < N; i++){
-
-        info_cliente[i].id_cliente = i + 1;
-        info_cliente[i].lista_id = lista_id;
-        info_cliente[i].lista_mutex = lista_mutex;
-
-        pthread_create(&clientes[i], NULL, cliente, (void*)&info_cliente[i]);
-    }
-
     // Criando as threads dos garçons
     for (int i = 0; i < G; i++){
 
@@ -171,6 +160,16 @@ int main(int argc, char* argv[]){
         info_garcom[i].lista_mutex = lista_mutex;
 
         pthread_create(&garcons[i], NULL, garcom, (void*)&info_garcom[i]);
+    }
+
+    // Criando as threads dos clientes
+    for (int i = 0; i < N; i++){
+
+        info_cliente[i].id_cliente = i + 1;
+        info_cliente[i].lista_id = lista_id;
+        info_cliente[i].lista_mutex = lista_mutex;
+
+        pthread_create(&clientes[i], NULL, cliente, (void*)&info_cliente[i]);
     }
 
     // Esperando as threads clientes terminarem
@@ -188,9 +187,9 @@ int main(int argc, char* argv[]){
 
     // Destruindo os semáforos
     sem_destroy(&sem_pedidos);
-    sem_destroy(&sem_entregas);
     sem_destroy(&mutex_pedidos);
     sem_destroy(&mutex_entregas);
+    sem_destroy(&garcons_prontos);
 
     return 0;
 }
