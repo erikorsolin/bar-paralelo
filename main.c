@@ -12,7 +12,7 @@
 
 
 int N, G, Gn, R, max_conversa, max_consumo, rodada = 0, index_clientes = 0, index_garcons = 0, pedidos_entregues = 0;
-sem_t sem_pedidos, mutex_clientes, mutex_garcons, mutex_rodada, garcons_prontos;
+sem_t sem_pedidos, mutex_clientes, mutex_garcons, garcons_prontos, sem_controle;
 
 typedef struct {
     int id_cliente;
@@ -40,14 +40,15 @@ void* cliente(void* info_cliente) {
         sleep(rand() % max_conversa);
 
         // Fazendo pedido
+        sem_wait(&sem_controle);
+        if (rodada == R) break;
+
         sem_wait(&mutex_clientes);
 
-        if (rodada < R) {
-            printf("CLIENTE %02d SOLICITA ATENDIMENTO PARA PEDIR\n", cliente->id_cliente);
-            cliente->lista_id_clientes[(index_clientes)%N] = cliente->id_cliente;
-            cliente->lista_sem_clientes[(index_clientes++)%N] = &sem_cliente;
-            sem_post(&sem_pedidos);
-        } else return 0;
+        printf("CLIENTE %02d SOLICITA ATENDIMENTO PARA PEDIR\n", cliente->id_cliente);
+        cliente->lista_id_clientes[(index_clientes)%N] = cliente->id_cliente;
+        cliente->lista_sem_clientes[(index_clientes++)%N] = &sem_cliente;
+        sem_post(&sem_pedidos);
 
         sem_post(&mutex_clientes);
 
@@ -56,13 +57,12 @@ void* cliente(void* info_cliente) {
 
         // Comendo
         sleep(rand() % max_consumo);
-    
+
     }
 
-    sem_destroy(&sem_cliente);
-    return 0;
+    printf("CLIENTE %02d SAI DO BAR\n", cliente->id_cliente);
+    pthread_exit(NULL);
 }
-
 
 
 void* garcom(void* info_garcom) {
@@ -98,29 +98,28 @@ void* garcom(void* info_garcom) {
         }
 
         // Esperando todos os garcons
-        sem_wait(&mutex_rodada);
+        sem_wait(&mutex_clientes);
 
         pedidos_entregues += Gn;
 
         if (!(pedidos_entregues == G * Gn)) {
 
-            sem_post(&mutex_rodada);
+            sem_post(&mutex_clientes);
             sem_wait(&garcons_prontos);
 
         } else {
 
-            sem_post(&mutex_rodada);
-            pedidos_entregues = 0;
             printf("\nFim da rodada %d\n\n", ++rodada);
+            pedidos_entregues = 0;
             for(int i = 0; i < G - 1; i++) sem_post(&garcons_prontos);
-
+            for(int i = 0; i < G * Gn; i++) sem_post(&sem_controle);
+            sem_post(&mutex_clientes);
         }
-        
     }
-    return 0;
+
+    printf("GARÇOM  %02d SAI DO BAR\n", garcom->id_garcom);
+    pthread_exit(NULL);
 }
-
-
 
 int main(int argc, char* argv[]){
     if (argc != 7) {
@@ -147,7 +146,7 @@ int main(int argc, char* argv[]){
     sem_init(&mutex_clientes, 0, 1);
     sem_init(&mutex_garcons, 0, 1);
     sem_init(&garcons_prontos, 0, 0);
-    sem_init(&mutex_rodada, 0, 1);
+    sem_init(&sem_controle, 0, (G*Gn));
 
     // Inicializando as threads
     pthread_t clientes[N];
@@ -176,25 +175,20 @@ int main(int argc, char* argv[]){
         pthread_create(&clientes[i], NULL, cliente, (void*)&info_cliente[i]);
     }
 
-    // Esperando as threads clientes terminarem
-    for (int i = 0; i < N; i++){
-        pthread_join(clientes[i], NULL);
-    }
-
     // Esperando as threads garçons terminarem
-    for (int i = 0; i < G; i++){
-        pthread_join(garcons[i], NULL);
-    }
+    for (int i = 0; i < G; i++) pthread_join(garcons[i], NULL);
+
+    // Esperando as threads clientes terminarem
+    for (int i = 0; i < N; i++) pthread_join(clientes[i], NULL);
 
     // Fechando o bar
-    printf("\nBAR FECHADO, ATÉ A PRÓXIMA!!!\n");
+    printf("\nBAR FECHADO, ATÉ A PRÓXIMA!!!\n\n");
 
     // Destruindo os semáforos
     sem_destroy(&sem_pedidos);
     sem_destroy(&mutex_clientes);
     sem_destroy(&mutex_garcons);
     sem_destroy(&garcons_prontos);
-    sem_destroy(&mutex_rodada);
 
     return 0;
 }
