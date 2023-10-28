@@ -128,7 +128,7 @@ void* garcom(void* info_garcom) {
 }
 
 int main(int argc, char* argv[]){
-    if (argc != 7) {
+    if (argc != 7 || atoi(argv[1]) <= 0 || atoi(argv[2]) <= 0 || atoi(argv[3]) <= 0 || atoi(argv[4]) <= 0 || atoi(argv[5]) <= 0 || atoi(argv[6]) <= 0) {
         printf("Uso: %s <clientes> <garcons> <clientes/garcon> <rodadas> <max.conversa> <max.consumo>\n", argv[0]);
         exit(1);
     }
