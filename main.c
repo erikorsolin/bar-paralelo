@@ -13,7 +13,8 @@
 // max_consumo -> tempo máximo de consumo
 
 
-int N, G, Gn, R, max_conversa_seg, max_conversa_micro, max_consumo_seg, max_consumo_micro, rodada = 0, index_clientes = 0, index_garcons = 0, pedidos_entregues = 0;
+int N, G, Gn, R, rodada = 0, index_clientes = 0, index_garcons = 0, pedidos_entregues = 0;
+int max_conversa_micro, max_conversa_mili, max_conversa_seg, max_consumo_micro, max_consumo_mili, max_consumo_seg;
 sem_t sem_pedidos, sem_controle, mutex_clientes, mutex_garcons, mutex_rodada, garcons_prontos;
 
 typedef struct {
@@ -40,7 +41,7 @@ void* cliente(void* info_cliente) {
 
         // Conversando
         if (max_conversa_seg) sleep(rand() % max_conversa_seg);
-        if (max_conversa_micro) usleep((rand() * 33) % max_conversa_micro);
+        if (max_conversa_micro) usleep((rand() % 1000) * (max_conversa_micro / 1000));
 
         // Fazendo pedido
         sem_wait(&sem_controle);
@@ -60,7 +61,7 @@ void* cliente(void* info_cliente) {
 
         // Comendo
         if (max_consumo_seg) sleep(rand() % max_consumo_seg);
-        if (max_consumo_micro) usleep((rand() * 33) % max_consumo_micro);
+        if (max_consumo_micro) usleep((rand() % 1000) * (max_consumo_micro / 1000));
     }
 
     pthread_exit(NULL);
@@ -137,12 +138,16 @@ int main(int argc, char* argv[]){
     G = atoi(argv[2]);
     Gn = atoi(argv[3]);
     R = atoi(argv[4]);
+    max_conversa_mili = atoi(argv[5]);
+    max_consumo_mili = atoi(argv[6]);
 
-    max_conversa_seg = atoi(argv[5])/1000;
-    max_conversa_micro = (atoi(argv[5])%1000)*1000;
+    if (!(max_conversa_mili % 1000)) max_conversa_mili-- ;
+    max_conversa_seg = max_conversa_mili / 1000;
+    max_conversa_micro = (max_conversa_mili % 1000) * 1000;
     
-    max_consumo_seg = atoi(argv[6])/1000;
-    max_consumo_micro = (atoi(argv[6])%1000)*1000;
+    if (!(max_consumo_mili % 1000)) max_consumo_mili-- ;
+    max_consumo_seg = max_consumo_mili / 1000;
+    max_consumo_micro = (max_consumo_mili % 1000) * 1000;
 
 
 
