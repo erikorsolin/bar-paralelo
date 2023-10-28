@@ -63,7 +63,6 @@ void* cliente(void* info_cliente) {
     }
 
     printf("CLIENTE %02d SAI DO BAR\n", cliente->id_cliente);
-    sem_destroy(&sem_cliente);
     pthread_exit(NULL);
 }
 
@@ -113,9 +112,13 @@ void* garcom(void* info_garcom) {
         } else {
 
             printf("\nFim da rodada %d\n\n", ++rodada);
+
             pedidos_entregues = 0;
             for(int i = 0; i < G - 1; i++) sem_post(&garcons_prontos);
-            for(int i = 0; i < G * Gn; i++) sem_post(&sem_controle);
+
+            if (rodada < R) for (int i = 0; i < G * Gn; i++) sem_post(&sem_controle);
+            else for (int i = 0; i < N; i++) sem_post(&sem_controle);
+
             sem_post(&mutex_rodada);
         }
     }
