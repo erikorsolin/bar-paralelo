@@ -13,7 +13,7 @@
 // max_consumo -> tempo máximo de consumo
 
 
-int N, G, Gn, R, max_conversa, max_consumo, rodada = 0, index_clientes = 0, index_garcons = 0, pedidos_entregues = 0;
+int N, G, Gn, R, max_conversa_seg, max_conversa_micro, max_consumo_seg, max_consumo_micro, rodada = 0, index_clientes = 0, index_garcons = 0, pedidos_entregues = 0;
 sem_t sem_pedidos, sem_controle, mutex_clientes, mutex_garcons, mutex_rodada, garcons_prontos;
 
 typedef struct {
@@ -39,7 +39,8 @@ void* cliente(void* info_cliente) {
     while (rodada < R) {
 
         // Conversando
-        sleep(rand() % max_conversa);
+        if (max_conversa_seg) sleep(rand() % max_conversa_seg);
+        if (max_conversa_micro) usleep((rand() * 33) % max_conversa_micro);
 
         // Fazendo pedido
         sem_wait(&sem_controle);
@@ -58,11 +59,10 @@ void* cliente(void* info_cliente) {
         sem_wait(&sem_cliente);
 
         // Comendo
-        sleep(rand() % max_consumo);
-
+        if (max_consumo_seg) sleep(rand() % max_consumo_seg);
+        if (max_consumo_micro) usleep((rand() * 33) % max_consumo_micro);
     }
 
-    printf("CLIENTE %02d SAI DO BAR\n", cliente->id_cliente);
     pthread_exit(NULL);
 }
 
@@ -123,7 +123,6 @@ void* garcom(void* info_garcom) {
         }
     }
 
-    printf("GARÇOM  %02d SAI DO BAR\n", garcom->id_garcom);
     pthread_exit(NULL);
 }
 
@@ -138,8 +137,14 @@ int main(int argc, char* argv[]){
     G = atoi(argv[2]);
     Gn = atoi(argv[3]);
     R = atoi(argv[4]);
-    max_conversa = atoi(argv[5]);
-    max_consumo = atoi(argv[6]);
+
+    max_conversa_seg = atoi(argv[5])/1000;
+    max_conversa_micro = (atoi(argv[5])%1000)*1000;
+    
+    max_consumo_seg = atoi(argv[6])/1000;
+    max_consumo_micro = (atoi(argv[6])%1000)*1000;
+
+
 
     // Inicializando vetores
     int* lista_id_clientes = (int*) malloc(N * sizeof(int));
@@ -190,7 +195,7 @@ int main(int argc, char* argv[]){
     for (int i = 0; i < N; i++) pthread_join(clientes[i], NULL);
 
     // Fechando o bar
-    printf("\nBAR FECHADO: ATÉ A PRÓXIMA!!!\n\n");
+    printf("BAR FECHADO: ATÉ A PRÓXIMA!!!\n\n");
 
     // Destruindo os semáforos
     sem_destroy(&sem_pedidos);
