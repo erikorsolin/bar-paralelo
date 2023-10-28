@@ -141,11 +141,9 @@ int main(int argc, char* argv[]){
     max_conversa_mili = atoi(argv[5]);
     max_consumo_mili = atoi(argv[6]);
 
-    if (!(max_conversa_mili % 1000)) max_conversa_mili-- ;
     max_conversa_seg = max_conversa_mili / 1000;
     max_conversa_micro = (max_conversa_mili % 1000) * 1000;
     
-    if (!(max_consumo_mili % 1000)) max_consumo_mili-- ;
     max_consumo_seg = max_consumo_mili / 1000;
     max_consumo_micro = (max_consumo_mili % 1000) * 1000;
 
