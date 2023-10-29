@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-
 // N -> número de clientes
 // G -> número de garçons
 // Gn -> quantidade de clientes que cada Garçom  atende
@@ -12,10 +11,9 @@
 // max_conversa -> tempo máximo de conversa
 // max_consumo -> tempo máximo de consumo
 
-
-int N, G, Gn, R, rodada = 0, index_clientes = 0, index_garcons = 0, pedidos_entregues = 0;
+int N, G, Gn, R, Gl, rodada = 0, index_clientes = 0, index_garcons = 0, pedidos_entregues = 0;
 int max_conversa_micro, max_conversa_mili, max_conversa_seg, max_consumo_micro, max_consumo_mili, max_consumo_seg;
-sem_t sem_pedidos, sem_controle, mutex_clientes, mutex_garcons, mutex_rodada, garcons_prontos;
+sem_t sem_pedidos, sem_controle, mutex_clientes, mutex_garcons, mutex_rodada, garcons_prontos, garcons_liberados;
 
 typedef struct {
     int id_cliente;
@@ -77,6 +75,8 @@ void* garcom(void* info_garcom) {
 
     while (rodada < R) {
 
+        sem_wait(&garcons_liberados);
+
         // Enchendo a bandeja
         for (int i = 0; i < Gn; i++) {
 
@@ -103,6 +103,7 @@ void* garcom(void* info_garcom) {
         // Esperando todos os garcons
         sem_wait(&mutex_rodada);
 
+        sem_post(&garcons_liberados);
         pedidos_entregues += Gn;
 
         if (!(pedidos_entregues == G * Gn)) {
@@ -131,6 +132,9 @@ int main(int argc, char* argv[]){
     if (argc != 7 || atoi(argv[1]) <= 0 || atoi(argv[2]) <= 0 || atoi(argv[3]) <= 0 || atoi(argv[4]) <= 0 || atoi(argv[5]) <= 0 || atoi(argv[6]) <= 0) {
         printf("Uso: %s <clientes> <garcons> <clientes/garcon> <rodadas> <max.conversa> <max.consumo>\n", argv[0]);
         exit(1);
+    } else if (atoi(argv[1]) < atoi(argv[3])) {
+        printf("Erro: O número de clientes deve ser maior que a capacidade de cada garçom. Caso contrário ocorrerá um deadlock inevitável, quando seguidas as regras do enunciado.\n");
+        exit(1);
     }
 
     // Inicializando as variáveis com os argumentos
@@ -147,7 +151,9 @@ int main(int argc, char* argv[]){
     max_consumo_seg = max_consumo_mili / 1000;
     max_consumo_micro = (max_consumo_mili % 1000) * 1000;
 
-
+    // Garçons liberados por vez
+    Gl = G;
+    while (N <= (Gn - 1) * Gl) Gl--;
 
     // Inicializando vetores
     int* lista_id_clientes = (int*) malloc(N * sizeof(int));
@@ -157,13 +163,13 @@ int main(int argc, char* argv[]){
 
     // Inicializando os semáforos
     sem_init(&sem_controle, 0, (G*Gn));
+    sem_init(&garcons_liberados, 0, Gl);
     sem_init(&garcons_prontos, 0, 0);
     sem_init(&mutex_clientes, 0, 1);
     sem_init(&mutex_garcons, 0, 1);
     sem_init(&mutex_rodada, 0, 1);
     sem_init(&sem_pedidos, 0, 0);
     
-
     // Inicializando as threads
     pthread_t clientes[N];
     pthread_t garcons[G];
@@ -207,6 +213,7 @@ int main(int argc, char* argv[]){
     sem_destroy(&mutex_garcons);
     sem_destroy(&mutex_clientes);
     sem_destroy(&garcons_prontos);
+    sem_destroy(&garcons_liberados);
 
     return 0;
 }
