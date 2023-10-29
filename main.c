@@ -215,6 +215,10 @@ int main(int argc, char* argv[]){
     // fechando o bar
     printf("BAR FECHADO: ATÉ A PRÓXIMA!!!\n\n");
 
+    // liberando a memória alocada
+    free(lista_id_clientes);
+    free(lista_sem_clientes);
+
     // destruindo os semáforos
     sem_destroy(&sem_pedidos);
     sem_destroy(&sem_controle);
