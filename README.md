@@ -51,7 +51,7 @@ O projeto `Bar Paralelo` foi desenvolvido como parte da disciplina de Programaç
 
 - **Configuração Dinâmica**: É possível ajustar diferentes parâmetros da simulação, como o número de clientes, garçons, mesas e duração da simulação. Esses parâmetros podem ser ajustados via linha de comando ou através de um arquivo de configuração.
 
-## 🖇️ Contribuições
+## 📎 Contribuições
 
 Contribuições são sempre bem-vindas! Aqui estão as etapas para contribuir:
 
@@ -62,6 +62,9 @@ Contribuições são sempre bem-vindas! Aqui estão as etapas para contribuir:
 5. Abra um Pull Request
    
 ## ✒️ Autores
+* ##### [Rafael Correa Bitencourt](https://github.com/rafael-bitencourt)
+* ##### [Erik Orsolin de Paula](https://github.com/erikorsolin)
+* ##### [Pedro Augusto da Fontoura](https://github.com/Fontoura21)
 
 ## 📄 Licença
 
