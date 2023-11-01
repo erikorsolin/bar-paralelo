@@ -61,14 +61,10 @@ Contribuições são sempre bem-vindas! Aqui estão as etapas para contribuir:
 4. Push para a branch (`git push origin feature/AmazingFeature`)
 5. Abra um Pull Request
    
+
 ## ✒️ Autores
 * ##### [Rafael Correa Bitencourt](https://github.com/rafael-bitencourt)
 * ##### [Erik Orsolin de Paula](https://github.com/erikorsolin)
 * ##### [Pedro Augusto da Fontoura](https://github.com/Fontoura21)
-
-## 📄 Licença
-
-Distribuído sob a licença MIT. Veja `LICENSE` para mais informações.
-
    
    
