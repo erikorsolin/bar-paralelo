@@ -47,7 +47,7 @@ O projeto `Bar Paralelo` foi desenvolvido como parte da disciplina de Programaç
     * `Mutexes` para evitar condição de corrida nas variáveis globais.
     * `Semáforos` para sincronizar pedidos de clientes e entregas de garçons.
       
-- **Log de Atividades**: O programa mantém um log detalhado de todas as atividades ocorridas durante a simulação. Isso inclui quando um clientefaz um pedido, o garçom atende o pedido, o garçom entrega o pedido entre outras ações. Esse log ajuda na depuração e no monitoramento da simulação.
+- **Log de Atividades**: O programa mantém um log detalhado de todas as atividades ocorridas durante a simulação. Isso inclui quando um cliente faz um pedido, o garçom atende o pedido, o garçom entrega o pedido entre outras ações. Esse log ajuda na depuração e no monitoramento da simulação.
 
 - **Configuração Dinâmica**: É possível ajustar diferentes parâmetros da simulação, como o número de clientes, garçons, mesas e duração da simulação. Esses parâmetros podem ser ajustados via linha de comando ou através de um arquivo de configuração.
 
